@@ -4,6 +4,7 @@ var specimen := Node3D.new()
 var elapsed := 0.0
 var dragging := false
 var spin := true
+var specimen_camera: Camera3D
 
 func _ready() -> void:
 	stretch = true
@@ -16,12 +17,15 @@ func _ready() -> void:
 	add_child(viewport)
 	viewport.add_child(specimen)
 	var camera := Camera3D.new()
-	camera.position = Vector3(0, 0, 3.2)
+	camera.position = Vector3(0, 0, 5.0)
+	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
+	camera.size = 2.8
+	specimen_camera = camera
 	viewport.add_child(camera)
 	var environment := WorldEnvironment.new()
 	environment.environment = Environment.new()
 	environment.environment.background_mode = Environment.BG_COLOR
-	environment.environment.background_color = Color("0b1626")
+	environment.environment.background_color = Color("191b36")
 	environment.environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	environment.environment.ambient_light_color = Color("7fadc5")
 	environment.environment.ambient_light_energy = 0.65
@@ -37,8 +41,8 @@ func _ready() -> void:
 func material(color: Color) -> StandardMaterial3D:
 	var result := StandardMaterial3D.new()
 	result.albedo_color = color
-	result.metallic = 0.25
-	result.roughness = 0.32
+	result.metallic = 0.12
+	result.roughness = 0.48
 	return result
 
 func mesh_node(mesh: Mesh, surface: Material, parent: Node3D) -> MeshInstance3D:
@@ -53,10 +57,13 @@ func rebuild(properties: Dictionary) -> void:
 		specimen.remove_child(child)
 		child.queue_free()
 	var severity: float = properties.symptom_severity / 10.0
-	var base_color := Color.from_hsv(0.46 - severity * 0.43, 0.68, 0.88)
+	var base_color := Color("609adb").lerp(Color("c47aca"), severity)
 	var shell := SphereMesh.new()
 	shell.radius = 0.78 + properties.incubation_period * 0.012
 	shell.height = shell.radius * 2
+	specimen_camera.size = (shell.radius + 0.24 + properties.lethality * 0.65 + properties.mutation_rate * 2.3) * 2.5
+	if properties.transmission_mode == "airborne":
+		specimen_camera.size *= 1.15
 	shell.radial_segments = 48
 	shell.rings = 24
 	var body := mesh_node(shell, material(base_color.darkened(properties.recovery_rate * 0.35)), specimen)

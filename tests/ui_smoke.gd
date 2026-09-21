@@ -13,6 +13,15 @@ func _ready() -> void:
 		get_viewport().get_texture().get_image().save_png("/tmp/maldemic-overview.png")
 	ui.show_lab(true)
 	assert(ui.lab.visible and not ui.dashboard.visible)
+	assert(ui.preset_buttons.size() == 6)
+	var original_data = Data.dict_names
+	for index in range(ui.PRESETS.size()):
+		ui.apply_preset(index)
+		assert(ui.draft.name == ui.PRESETS[index].name)
+		assert(ui.name_input.text == ui.PRESETS[index].name)
+		assert(ui.specimen_name.text == ui.PRESETS[index].name)
+		assert(Data.dict_names == original_data)
+	ui.reset_traits()
 	var before: int = ui.preview.specimen.get_child(0).get_child_count()
 	ui.sliders.infection_rate.value = 0.1
 	assert(ui.preview.specimen.get_child(0).get_child_count() < before)
@@ -20,9 +29,9 @@ func _ready() -> void:
 	ui.sliders.mutation_rate.value = 0.1
 	ui.sliders.incubation_period.value = 21
 	ui.sliders.symptom_severity.value = 10
-	ui.draft = ui.DEFAULTS.duplicate()
-	ui.reset_controls()
+	ui.reset_traits()
 	await get_tree().create_timer(0.5).timeout
+	assert(ui.status_label.get_global_rect().end.y <= get_viewport().get_visible_rect().size.y)
 	if DisplayServer.get_name() != "headless":
 		await RenderingServer.frame_post_draw
 		get_viewport().get_texture().get_image().save_png("/tmp/maldemic-lab.png")

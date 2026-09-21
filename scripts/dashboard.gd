@@ -1,8 +1,23 @@
 extends Control
 
 const Preview = preload("res://scripts/virus_preview.gd")
+const Glyph = preload("res://scripts/virus_glyph.gd")
 const Chart = preload("res://scripts/trend_chart.gd")
 const DEFAULTS = {"name": "Custom Virus", "infection_rate": 0.9, "recovery_rate": 0.4, "lethality": 0.015, "mutation_rate": 0.002, "incubation_period": 5.0, "symptom_severity": 6.0, "transmission_mode": "droplet", "seed_city": "SF"}
+const PRESETS = [
+	{"name": "Aster", "caption": "Balanced", "color": "aaa0f4", "infection_rate": 0.55, "recovery_rate": 0.4, "lethality": 0.015, "mutation_rate": 0.002, "incubation_period": 5.0, "symptom_severity": 4.0, "transmission_mode": "droplet"},
+	{"name": "Nimbus", "caption": "Fast spread", "color": "6acfea", "infection_rate": 0.85, "recovery_rate": 0.3, "lethality": 0.01, "mutation_rate": 0.004, "incubation_period": 3.0, "symptom_severity": 3.0, "transmission_mode": "airborne"},
+	{"name": "Ember", "caption": "High severity", "color": "eeb980", "infection_rate": 0.6, "recovery_rate": 0.2, "lethality": 0.08, "mutation_rate": 0.003, "incubation_period": 4.0, "symptom_severity": 9.0, "transmission_mode": "contact"},
+	{"name": "Clover", "caption": "Fast recovery", "color": "68cfad", "infection_rate": 0.4, "recovery_rate": 0.75, "lethality": 0.005, "mutation_rate": 0.001, "incubation_period": 2.0, "symptom_severity": 2.0, "transmission_mode": "droplet"},
+	{"name": "Orchid", "caption": "High mutation", "color": "d489e2", "infection_rate": 0.65, "recovery_rate": 0.35, "lethality": 0.025, "mutation_rate": 0.075, "incubation_period": 7.0, "symptom_severity": 6.0, "transmission_mode": "airborne"},
+	{"name": "Echo", "caption": "Long incubation", "color": "7a9cec", "infection_rate": 0.5, "recovery_rate": 0.4, "lethality": 0.01, "mutation_rate": 0.002, "incubation_period": 18.0, "symptom_severity": 5.0, "transmission_mode": "contact"}
+]
+var preset_strip: VBoxContainer
+var preset_buttons: Array[Button] = []
+var overview_button: Button
+var lab_button: Button
+var specimen_name: Label
+var specimen_summary: Label
 var draft: Dictionary = DEFAULTS.duplicate()
 var saved: Dictionary = DEFAULTS.duplicate()
 var dashboard: HBoxContainer
@@ -30,19 +45,19 @@ var output_path := ""
 var pending_design: Dictionary = {}
 var playback_buttons: Array[Button] = []
 
-func label(text_value: String, font_size := 14, color := Color("e5edf7")) -> Label:
+func label(text_value: String, font_size := 14, color := Color("eeedff")) -> Label:
 	var node := Label.new()
 	node.text = text_value
 	node.add_theme_font_size_override("font_size", font_size)
 	node.add_theme_color_override("font_color", color)
 	return node
 
-func style(color: Color, border := Color("25374e")) -> StyleBoxFlat:
+func style(color: Color, border := Color("303250")) -> StyleBoxFlat:
 	var box := StyleBoxFlat.new()
 	box.bg_color = color
 	box.border_color = border
 	box.set_border_width_all(1)
-	box.set_corner_radius_all(12)
+	box.set_corner_radius_all(10)
 	box.content_margin_left = 18
 	box.content_margin_right = 18
 	box.content_margin_top = 12
@@ -51,7 +66,7 @@ func style(color: Color, border := Color("25374e")) -> StyleBoxFlat:
 
 func panel(parent: Node) -> VBoxContainer:
 	var shell := PanelContainer.new()
-	shell.add_theme_stylebox_override("panel", style(Color("101e30")))
+	shell.add_theme_stylebox_override("panel", style(Color("191b36")))
 	parent.add_child(shell)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 12)
@@ -62,35 +77,85 @@ func button(text_value: String, action: Callable, accent := false) -> Button:
 	var node := Button.new()
 	node.text = text_value
 	node.custom_minimum_size.y = 40
-	node.add_theme_stylebox_override("normal", style(Color("1c584f") if accent else Color("182b40")))
-	node.add_theme_stylebox_override("hover", style(Color("287568") if accent else Color("28425d"), Color("67dcc2")))
-	node.add_theme_stylebox_override("pressed", style(Color("315b68")))
+	node.add_theme_stylebox_override("normal", style(Color("6a528e") if accent else Color("282b4b")))
+	node.add_theme_stylebox_override("hover", style(Color("8164ac") if accent else Color("393d63"), Color("d49de7")))
+	node.add_theme_stylebox_override("pressed", style(Color("504776")))
 	node.pressed.connect(action)
 	return node
 
 func _ready() -> void:
+	theme = Theme.new()
+	theme.default_font_size = 14
+	for type_name in ["LineEdit", "OptionButton"]:
+		var field := style(Color("272a49"))
+		field.content_margin_top = 7
+		field.content_margin_bottom = 7
+		theme.set_stylebox("normal", type_name, field)
+		theme.set_stylebox("focus", type_name, style(Color(0, 0, 0, 0), Color("aaa0f4")))
+		theme.set_color("font_color", type_name, Color("eeedff"))
+	for style_name in ["slider", "grabber_area", "grabber_area_highlight"]:
+		var track := StyleBoxFlat.new()
+		track.bg_color = Color("323656") if style_name == "slider" else Color("9684d8")
+		track.set_corner_radius_all(3)
+		track.content_margin_top = 3
+		track.content_margin_bottom = 3
+		theme.set_stylebox(style_name, "HSlider", track)
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var background := ColorRect.new()
-	background.color = Color("080f1c")
+	background.color = Color("30365c")
 	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(background)
 	var margin := MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	for edge in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override("margin_" + edge, 22)
+		margin.add_theme_constant_override("margin_" + edge, 16)
 	add_child(margin)
+	var frame := PanelContainer.new()
+	var frame_style := style(Color("111329"), Color("5a5f87"))
+	frame_style.set_corner_radius_all(22)
+	frame_style.set_border_width_all(2)
+	frame_style.content_margin_left = 12
+	frame_style.content_margin_right = 18
+	frame_style.shadow_color = Color(0.02, 0.025, 0.09, 0.35)
+	frame_style.shadow_size = 10
+	frame.add_theme_stylebox_override("panel", frame_style)
+	margin.add_child(frame)
+	var frame_row := HBoxContainer.new()
+	frame_row.add_theme_constant_override("separation", 16)
+	frame.add_child(frame_row)
+	var rail := VBoxContainer.new()
+	rail.custom_minimum_size.x = 42
+	rail.add_theme_constant_override("separation", 14)
+	frame_row.add_child(rail)
+	var mark := label("m", 30, Color("ef87ac"))
+	mark.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	rail.add_child(mark)
+	for entry in [["◉", "World overview", false], ["✣", "Virus laboratory", true]]:
+		var nav := button(entry[0], func(): show_lab(entry[2]))
+		nav.tooltip_text = entry[1]
+		var nav_style := style(Color("20223e"))
+		nav_style.content_margin_left = 8
+		nav_style.content_margin_right = 8
+		nav.add_theme_stylebox_override("normal", nav_style)
+		rail.add_child(nav)
+	var divider := VSeparator.new()
+	frame_row.add_child(divider)
 	var layout := VBoxContainer.new()
-	layout.add_theme_constant_override("separation", 18)
-	margin.add_child(layout)
+	layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	layout.add_theme_constant_override("separation", 12)
+	frame_row.add_child(layout)
 	var header := HBoxContainer.new()
 	layout.add_child(header)
 	var brand := VBoxContainer.new()
 	brand.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(brand)
-	brand.add_child(label("M A L D E M I C", 25))
-	brand.add_child(label("GLOBAL OUTBREAK OBSERVATORY", 11, Color("6edbc1")))
-	header.add_child(button("Overview", func(): show_lab(false)))
-	header.add_child(button("Virus Lab", func(): show_lab(true), true))
+	brand.add_child(label("Maldemic", 25))
+	brand.add_child(label("OUTBREAK RESEARCH  /  LIVE SIMULATION", 10, Color("8ccce2")))
+	overview_button = button("Overview", func(): show_lab(false), true)
+	header.add_child(overview_button)
+	lab_button = button("Virus Lab", func(): show_lab(true))
+	header.add_child(lab_button)
+	build_presets(layout)
 	dashboard = HBoxContainer.new()
 	dashboard.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	dashboard.add_theme_constant_override("separation", 18)
@@ -102,7 +167,8 @@ func _ready() -> void:
 	layout.add_child(lab)
 	build_lab()
 	lab.hide()
-	status_label = label("Drag the globe to orbit  /  Scroll to zoom  /  Select a city to inspect", 12, Color("8fa4bc"))
+	preset_strip.hide()
+	status_label = label("Drag the globe to orbit  /  Scroll to zoom  /  Select a city to inspect", 12, Color("a1a5c5"))
 	layout.add_child(status_label)
 	var hidden_counter := RichTextLabel.new()
 	hidden_counter.name = "Day Counter"
@@ -122,13 +188,86 @@ func _ready() -> void:
 	draft = saved.duplicate()
 	reset_controls()
 
+func build_presets(parent: Node) -> void:
+	preset_strip = VBoxContainer.new()
+	preset_strip.add_theme_constant_override("separation", 6)
+	parent.add_child(preset_strip)
+	preset_strip.add_child(label("STRAIN LIBRARY   /   FICTIONAL STARTER DESIGNS", 10, Color("a1a5c5")))
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	preset_strip.add_child(row)
+	for index in range(PRESETS.size()):
+		var preset: Dictionary = PRESETS[index]
+		var card := button("", func(): apply_preset(index))
+		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		card.custom_minimum_size.y = 88
+		card.tooltip_text = "Load %s traits into the editor. The current simulation stays unchanged." % preset.name
+		var surface := style(Color("292b4b"))
+		surface.content_margin_left = 8
+		surface.content_margin_right = 8
+		card.add_theme_stylebox_override("normal", surface)
+		row.add_child(card)
+		preset_buttons.append(card)
+		var contents := VBoxContainer.new()
+		contents.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		contents.offset_top = 4
+		contents.offset_bottom = -4
+		contents.add_theme_constant_override("separation", 0)
+		contents.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		card.add_child(contents)
+		var icon := Glyph.new()
+		icon.custom_minimum_size.y = 38
+		icon.tint = Color(preset.color)
+		icon.variant = index
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		contents.add_child(icon)
+		for text_value in [preset.name, preset.caption]:
+			var caption := label(text_value, 12 if text_value == preset.name else 10, Color(preset.color))
+			caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			contents.add_child(caption)
+
+func apply_preset(index: int) -> void:
+	var preset: Dictionary = PRESETS[index]
+	for key in DEFAULTS:
+		if preset.has(key):
+			draft[key] = preset[key]
+	reset_controls()
+	status_label.text = preset.name + " loaded into the editor · Save design to keep your changes"
+
+func update_specimen_caption() -> void:
+	if not is_instance_valid(specimen_name):
+		return
+	specimen_name.text = draft.name if not draft.name.is_empty() else "Untitled strain"
+	specimen_summary.text = "%s   /   %d day incubation   /   Severity %d" % [str(draft.transmission_mode).capitalize(), draft.incubation_period, draft.symptom_severity]
+
+	for index in range(preset_buttons.size()):
+		var preset: Dictionary = PRESETS[index]
+		var matches := true
+		for key in DEFAULTS:
+			if preset.has(key) and draft[key] != preset[key]:
+				matches = false
+		var surface := style(Color("343451") if matches else Color("292b4b"), Color(preset.color) if matches else Color("303250"))
+		surface.content_margin_left = 8
+		surface.content_margin_right = 8
+		preset_buttons[index].add_theme_stylebox_override("normal", surface)
+
+func reset_traits() -> void:
+	draft = DEFAULTS.duplicate()
+	reset_controls()
+	status_label.text = "Default traits restored · Save design to keep your changes"
+
+func refresh_specimen() -> void:
+	preview.rebuild(draft)
+	update_specimen_caption()
+
 func build_dashboard() -> void:
 	var sidebar := VBoxContainer.new()
-	sidebar.custom_minimum_size.x = 310
+	sidebar.custom_minimum_size.x = 290
 	sidebar.add_theme_constant_override("separation", 14)
 	dashboard.add_child(sidebar)
 	var timeline := panel(sidebar)
-	timeline.add_child(label("SIMULATION TIMELINE", 11, Color("8fa4bc")))
+	timeline.add_child(label("SIMULATION TIMELINE", 11, Color("a1a5c5")))
 	day_label = label("Day 01", 30)
 	timeline.add_child(day_label)
 	var controls := HBoxContainer.new()
@@ -154,7 +293,7 @@ func build_dashboard() -> void:
 	trends.add_child(city_picker)
 	chart = Chart.new()
 	chart.name = "Graph"
-	chart.custom_minimum_size = Vector2(260, 100)
+	chart.custom_minimum_size = Vector2(240, 90)
 	chart.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	trends.add_child(chart)
 	var legend := HBoxContainer.new()
@@ -163,10 +302,10 @@ func build_dashboard() -> void:
 	for i in range(4):
 		legend.add_child(label(names[i], 10, Chart.COLORS[i]))
 	var strain := panel(sidebar)
-	strain.add_child(label("YOUR VIRUS", 11, Color("8fa4bc")))
+	strain.add_child(label("YOUR VIRUS", 11, Color("a1a5c5")))
 	strain_label = label("Custom Virus", 19)
 	strain.add_child(strain_label)
-	strain.add_child(label("Build a strain. Watch it spread.", 13, Color("8fa4bc")))
+	strain.add_child(label("Build a strain. Watch it spread.", 13, Color("a1a5c5")))
 	strain.add_child(button("Open Virus Lab  →", func(): show_lab(true), true))
 	var world_column := VBoxContainer.new()
 	world_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -174,7 +313,7 @@ func build_dashboard() -> void:
 	dashboard.add_child(world_column)
 	var world_panel := panel(world_column)
 	world_panel.get_parent().size_flags_vertical = Control.SIZE_EXPAND_FILL
-	world_panel.add_child(label("WORLD VIEW   /   LIVE AIR TRAFFIC", 12, Color("6edbc1")))
+	world_panel.add_child(label("WORLD VIEW   /   LIVE AIR TRAFFIC", 12, Color("8ccce2")))
 	var container := SubViewportContainer.new()
 	container.stretch = true
 	container.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -201,7 +340,7 @@ func build_dashboard() -> void:
 
 func build_lab() -> void:
 	var left_column := VBoxContainer.new()
-	left_column.custom_minimum_size.x = 360
+	left_column.custom_minimum_size.x = 330
 	lab.add_child(left_column)
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -210,16 +349,16 @@ func build_lab() -> void:
 	var form := panel(scroll)
 	form.get_parent().size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	form.add_child(label("Design your strain", 24))
-	form.add_child(label("Change a trait. See the specimen evolve.", 13, Color("8fa4bc")))
+	form.add_child(label("Shape your next outbreak.", 13, Color("a1a5c5")))
 	name_input = LineEdit.new()
 	name_input.placeholder_text = "Strain name"
 	name_input.max_length = 40
-	name_input.text_changed.connect(func(value): draft.name = value)
+	name_input.text_changed.connect(func(value): draft.name = value; update_specimen_caption())
 	form.add_child(name_input)
 	mode_input = OptionButton.new()
 	for mode in ["droplet", "airborne", "contact"]:
 		mode_input.add_item(mode.capitalize())
-	mode_input.item_selected.connect(func(index): draft.transmission_mode = ["droplet", "airborne", "contact"][index]; preview.rebuild(draft))
+	mode_input.item_selected.connect(func(index): draft.transmission_mode = ["droplet", "airborne", "contact"][index]; refresh_specimen())
 	form.add_child(label("Transmission · body shape", 12))
 	form.add_child(mode_input)
 	var traits := [
@@ -235,7 +374,7 @@ func build_lab() -> void:
 		var title := label(property_spec[1], 12)
 		title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_child(title)
-		var value_label := label("", 12, Color("6edbc1"))
+		var value_label := label("", 12, Color("8ccce2"))
 		row.add_child(value_label)
 		var slider := HSlider.new()
 		slider.min_value = property_spec[2]
@@ -247,7 +386,7 @@ func build_lab() -> void:
 		slider.value_changed.connect(func(value):
 			draft[key] = value
 			value_label.text = ("%d days" % value if key == "incubation_period" else "%d / 10" % value) if key in ["incubation_period", "symptom_severity"] else "%.1f%%" % (value * 100)
-			preview.rebuild(draft))
+			refresh_specimen())
 		sliders[key] = slider
 	form.add_child(label("Starting city", 12))
 	seed_input = OptionButton.new()
@@ -258,16 +397,20 @@ func build_lab() -> void:
 	left_column.add_child(button("Save design", save_design, true))
 	start_button = button("Start new simulation", start_simulation, true)
 	left_column.add_child(start_button)
-	left_column.add_child(button("Reset traits", func(): draft = DEFAULTS.duplicate(); reset_controls()))
+	left_column.add_child(button("Reset traits", reset_traits))
 	var specimen_panel := panel(lab)
 	specimen_panel.get_parent().size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	specimen_panel.add_child(label("VIRUS LAB   /   LIVE SPECIMEN", 12, Color("6edbc1")))
+	specimen_panel.add_child(label("LIVE SPECIMEN  /  PROCEDURAL 3D", 10, Color("8ccce2")))
+	specimen_name = label("Custom Virus", 24)
+	specimen_panel.add_child(specimen_name)
 	preview = Preview.new()
-	preview.custom_minimum_size = Vector2(320, 280)
+	preview.custom_minimum_size = Vector2(300, 170)
 	preview.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	specimen_panel.add_child(preview)
-	specimen_panel.add_child(label("Drag to rotate  ·  Traits reshape the model instantly", 13, Color("8fa4bc")))
-	var note := label("Stylized trait visualization. New simulations restart at day 1.\nSave design keeps your traits without changing the current run.", 12, Color("8fa4bc"))
+	specimen_summary = label("", 12, Color("c3b0ee"))
+	specimen_panel.add_child(specimen_summary)
+	specimen_panel.add_child(label("Drag to rotate  ·  Traits reshape the model instantly", 13, Color("a1a5c5")))
+	var note := label("Stylized trait visualization. New simulations restart at day 1.\nSave design keeps your traits without changing the current run.", 12, Color("a1a5c5"))
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	specimen_panel.add_child(note)
 
@@ -280,11 +423,14 @@ func reset_controls() -> void:
 	for i in range(seed_input.item_count):
 		if seed_input.get_item_text(i) == draft.seed_city:
 			seed_input.select(i)
-	preview.rebuild(draft)
+	refresh_specimen()
 
 func show_lab(show_editor: bool) -> void:
 	if show_editor and controller.is_auto_running:
 		controller._on_run_stop_button_down()
+	preset_strip.visible = show_editor
+	overview_button.add_theme_stylebox_override("normal", style(Color("282b4b") if show_editor else Color("6a528e")))
+	lab_button.add_theme_stylebox_override("normal", style(Color("6a528e") if show_editor else Color("282b4b")))
 	dashboard.visible = not show_editor
 	lab.visible = show_editor
 	globe.process_mode = Node.PROCESS_MODE_DISABLED if show_editor else Node.PROCESS_MODE_INHERIT

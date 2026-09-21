@@ -16,6 +16,9 @@ Once the python program complies this infromation we then visuzalize this simula
 Run `ui.tscn` (the main scene) in Godot 4.7. The overview includes a city selector,
 SIRD history, world totals, flight visualization, and bounded day playback.
 Open **Virus Lab** to change your strain and rotate its procedural 3D preview.
+Six fictional starter cards load distinct trait combinations into the editor without
+changing the current simulation. The indigo interface, lilac panels, and cyan/pink
+accents follow the supplied visual reference.
 The trait labels explain each visual mapping; the model is a stylized visualization,
 not a biological reconstruction.
 
