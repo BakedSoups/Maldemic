@@ -22,6 +22,7 @@ var draft: Dictionary = DEFAULTS.duplicate()
 var saved: Dictionary = DEFAULTS.duplicate()
 var dashboard: HBoxContainer
 var lab: HBoxContainer
+var controller_script := "res://scripts/main_controller.gd"
 var controller: Node2D
 var globe: Node3D
 var preview: SubViewportContainer
@@ -84,6 +85,8 @@ func button(text_value: String, action: Callable, accent := false) -> Button:
 	return node
 
 func _ready() -> void:
+	if controller_script == "res://scripts/main_controller.gd":
+		Data.day_count = 0
 	theme = Theme.new()
 	theme.default_font_size = 14
 	for type_name in ["LineEdit", "OptionButton"]:
@@ -155,6 +158,8 @@ func _ready() -> void:
 	header.add_child(overview_button)
 	lab_button = button("Virus Lab", func(): show_lab(true))
 	header.add_child(lab_button)
+	if controller_script == "res://scripts/main_controller.gd":
+		header.add_child(button("Strategy", func(): get_tree().change_scene_to_file("res://ui.tscn")))
 	build_presets(layout)
 	dashboard = HBoxContainer.new()
 	dashboard.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -176,7 +181,7 @@ func _ready() -> void:
 	add_child(hidden_counter)
 	controller = Node2D.new()
 	controller.name = "Main_Controller"
-	controller.set_script(load("res://scripts/main_controller.gd"))
+	controller.set_script(load(controller_script))
 	add_child(controller)
 	var file := FileAccess.open("user://virus_design.json", FileAccess.READ)
 	if file:
@@ -324,6 +329,7 @@ func build_dashboard() -> void:
 	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	container.add_child(viewport)
 	globe = load("res://scenes/Camera.tscn").instantiate()
+	configure_globe()
 	viewport.add_child(globe)
 	globe.target_spring_length = 43.0
 	globe.spring_arm_3d.spring_length = 43.0
@@ -547,3 +553,6 @@ func compact_number(value: float) -> String:
 func _exit_tree() -> void:
 	if simulation_thread != null:
 		simulation_thread.wait_to_finish()
+
+func configure_globe() -> void:
+	pass

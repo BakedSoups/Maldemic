@@ -1,0 +1,190 @@
+[
+  {
+    "id": "dispersal",
+    "name": "Dispersal",
+    "branch": "Spread",
+    "cost": 5,
+    "prerequisites": [],
+    "exclusions": [],
+    "effects": {
+      "spread": 0.15,
+      "visibility": 0.06
+    },
+    "visual": "More surface fins",
+    "explanation": "Spread +15%, Visibility +6%"
+  },
+  {
+    "id": "carrier",
+    "name": "Carrier persistence",
+    "branch": "Spread",
+    "cost": 7,
+    "prerequisites": [
+      "dispersal"
+    ],
+    "exclusions": [],
+    "effects": {
+      "clearance": -0.2,
+      "visibility": 0.06
+    },
+    "visual": "Longer fins",
+    "explanation": "Clearance -20%, Visibility +6%"
+  },
+  {
+    "id": "affinity",
+    "name": "Travel affinity",
+    "branch": "Spread",
+    "cost": 8,
+    "prerequisites": [
+      "dispersal"
+    ],
+    "exclusions": [],
+    "effects": {
+      "travel": 0.6,
+      "spread": -0.05
+    },
+    "visual": "Cyan nodes",
+    "explanation": "Travel +60%, Spread -5%"
+  },
+  {
+    "id": "network",
+    "name": "Network bloom",
+    "branch": "Spread",
+    "cost": 12,
+    "prerequisites": [
+      "affinity"
+    ],
+    "exclusions": [],
+    "effects": {
+      "spread": 0.22,
+      "visibility": 0.12
+    },
+    "visual": "Dense fins",
+    "explanation": "Spread +22%, Visibility +12%"
+  },
+  {
+    "id": "signal",
+    "name": "Signal flare",
+    "branch": "Impact",
+    "cost": 5,
+    "prerequisites": [],
+    "exclusions": [],
+    "effects": {
+      "impact": 0.25,
+      "spread": 0.12,
+      "visibility": 0.08
+    },
+    "visual": "Pink nodes",
+    "explanation": "Impact +25%, Spread +12%, Visibility +8%"
+  },
+  {
+    "id": "burden",
+    "name": "Systemic burden",
+    "branch": "Impact",
+    "cost": 7,
+    "prerequisites": [
+      "signal"
+    ],
+    "exclusions": [],
+    "effects": {
+      "impact": 0.35,
+      "spread": 0.18,
+      "visibility": 0.12
+    },
+    "visual": "Bright core",
+    "explanation": "Impact +35%, Spread +18%, Visibility +12%"
+  },
+  {
+    "id": "crisis",
+    "name": "Crisis response",
+    "branch": "Impact",
+    "cost": 9,
+    "prerequisites": [
+      "burden"
+    ],
+    "exclusions": [],
+    "effects": {
+      "resistance": 0.35,
+      "visibility": 0.08
+    },
+    "visual": "Internal filaments",
+    "explanation": "Resistance +35%, Visibility +8%"
+  },
+  {
+    "id": "pressure",
+    "name": "Pressure wave",
+    "branch": "Impact",
+    "cost": 12,
+    "prerequisites": [
+      "crisis"
+    ],
+    "exclusions": [],
+    "effects": {
+      "spread": 0.3,
+      "impact": 0.3,
+      "visibility": 0.18
+    },
+    "visual": "Radiant membrane",
+    "explanation": "Spread +30%, Impact +30%, Visibility +18%"
+  },
+  {
+    "id": "cold",
+    "name": "Cold tolerance",
+    "branch": "Adaptation",
+    "cost": 5,
+    "prerequisites": [],
+    "exclusions": [],
+    "effects": {
+      "cold": 0.35,
+      "hot": -0.08
+    },
+    "visual": "Faceted plates",
+    "explanation": "Cold +35%, Hot -8%"
+  },
+  {
+    "id": "heat",
+    "name": "Heat tolerance",
+    "branch": "Adaptation",
+    "cost": 5,
+    "prerequisites": [],
+    "exclusions": [],
+    "effects": {
+      "hot": 0.35,
+      "cold": -0.08
+    },
+    "visual": "Amber plates",
+    "explanation": "Hot +35%, Cold -8%"
+  },
+  {
+    "id": "disruption",
+    "name": "Research disruption",
+    "branch": "Adaptation",
+    "cost": 10,
+    "prerequisites": [
+      "cold"
+    ],
+    "exclusions": [],
+    "effects": {
+      "research": -0.28,
+      "spread": -0.03
+    },
+    "visual": "Lilac shell",
+    "explanation": "Research -28%, Spread -3%"
+  },
+  {
+    "id": "resilience",
+    "name": "Response resilience",
+    "branch": "Adaptation",
+    "cost": 13,
+    "prerequisites": [
+      "disruption"
+    ],
+    "exclusions": [],
+    "effects": {
+      "resistance": 0.45,
+      "research": -0.18,
+      "visibility": 0.08
+    },
+    "visual": "Layered armor",
+    "explanation": "Resistance +45%, Research -18%, Visibility +8%"
+  }
+]

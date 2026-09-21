@@ -1,0 +1,129 @@
+{
+  "name": "Persistent signal",
+  "target": 0.25,
+  "established": 100,
+  "seconds_per_day": 18.0,
+  "max_days": 180,
+  "start_infected": 1500,
+  "start_points": 12,
+  "region_reward": 5,
+  "milestones": [
+    0.001,
+    0.01,
+    0.05,
+    0.1,
+    0.2
+  ],
+  "milestone_reward": 4,
+  "regions": [
+    {
+      "code": "SF",
+      "population": 809000,
+      "climate": "mild",
+      "healthcare": 0.8,
+      "connections": [
+        "CHI",
+        "LON",
+        "WA"
+      ]
+    },
+    {
+      "code": "CHI",
+      "population": 2664000,
+      "climate": "cold",
+      "healthcare": 0.75,
+      "connections": [
+        "SF",
+        "NYC",
+        "MA"
+      ]
+    },
+    {
+      "code": "LON",
+      "population": 8900000,
+      "climate": "cold",
+      "healthcare": 0.9,
+      "connections": [
+        "SF",
+        "NYC",
+        "PA"
+      ]
+    },
+    {
+      "code": "MA",
+      "population": 456000,
+      "climate": "hot",
+      "healthcare": 0.65,
+      "connections": [
+        "CHI",
+        "NYC",
+        "WA"
+      ]
+    },
+    {
+      "code": "WA",
+      "population": 689000,
+      "climate": "mild",
+      "healthcare": 0.85,
+      "connections": [
+        "SF",
+        "MA",
+        "PA"
+      ]
+    },
+    {
+      "code": "PA",
+      "population": 2161000,
+      "climate": "mild",
+      "healthcare": 0.9,
+      "connections": [
+        "LON",
+        "WA",
+        "NYC"
+      ]
+    },
+    {
+      "code": "NYC",
+      "population": 8258000,
+      "climate": "cold",
+      "healthcare": 0.85,
+      "connections": [
+        "CHI",
+        "LON",
+        "MA",
+        "PA"
+      ]
+    }
+  ],
+  "difficulties": {
+    "Guided": {
+      "response": 0.65,
+      "cost": 0.85,
+      "points": 4
+    },
+    "Standard": {
+      "response": 1.0,
+      "cost": 1.0,
+      "points": 0
+    },
+    "Expert": {
+      "response": 1.35,
+      "cost": 1.2,
+      "points": -2
+    }
+  },
+  "loadouts": {
+    "Drifter": {
+      "spread": 0.12,
+      "visibility": 0.04
+    },
+    "Quiet shell": {
+      "visibility": -0.18,
+      "spread": -0.03
+    },
+    "Prism": {
+      "resistance": 0.2,
+      "travel": -0.1
+    }
+  }
+}

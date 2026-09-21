@@ -1,7 +1,7 @@
 extends Node
 
 func _ready() -> void:
-	var ui = load("res://ui.tscn").instantiate()
+	var ui = load("res://viewer.tscn").instantiate()
 	add_child(ui)
 	await get_tree().create_timer(2.0).timeout
 	assert(ui.stat_labels.size() == 4)
