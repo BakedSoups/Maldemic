@@ -87,13 +87,15 @@ if len(sys.argv) > 1 and sys.argv[1] == "CustomVirus":
                 "recovery_rate": virus_data["recovery_rate"],
                 "lethality": virus_data["lethality"],
                 "attributes": {
-                    "transmission_mode": "droplet",
-                    "incubation_period": 5,
-                    "symptom_severity": 6
+                    "transmission_mode": virus_data.get("transmission_mode", "droplet"),
+                    "incubation_period": int(virus_data.get("incubation_period", 5)),
+                    "symptom_severity": int(virus_data.get("symptom_severity", 6))
                 }
             }
         }
         
+        custom_virus["attributes"] = copy.deepcopy(custom_virus["strains"][strain_name]["attributes"])
+        custom_virus["mutation_rate"] = virus_data.get("mutation_rate", 0.002)
         virus_config = custom_virus
         seed = virus_data["seed_city"]
         
@@ -113,7 +115,6 @@ else:
     seed = "SF"
     print("\nStarting pandemic simulation with default virus...")
 
-state_dictionary, city_dictionary = start_pandemic(seed, state_dictionary, city_array, virus_config)
 state_dictionary, city_dictionary = start_pandemic(seed, state_dictionary, city_array, virus_config)
 
 if len(sys.argv) > 1 and sys.argv[1] == "CustomVirus":
@@ -208,7 +209,7 @@ if sample_day_key in preloaded:
     else:
         print("No virus_history found in day data")
 
-output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "pandemic_simulation.json")
+output_path = sys.argv[4] if len(sys.argv) > 4 else os.path.join(os.path.dirname(os.path.abspath(__file__)), "pandemic_simulation.json")
 print(f"Writing output to: {output_path}")
 with open(output_path, "w") as f:
     json.dump(preloaded, f)

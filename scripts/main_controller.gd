@@ -3,7 +3,7 @@ var DIR = OS.get_executable_path().get_base_dir()
 var interpreter_path = "res://Python_Brain/venv/Scripts/python"
 var script_path = "res://Python_Brain/preload.py"
 var is_day_processing := false
-@onready var graph_node := $"../Graph"
+@onready var graph_node = get_parent().chart
 @onready var current_city := "SF"
 var previous_city := ""
 var previous_day := -1
@@ -24,7 +24,9 @@ func _ready():
 		script_path = ProjectSettings.globalize_path("res://Python_Brain/preload.py")
 	
 	print("Starting simulation...")
-	notify("Simulation", "Started", "The simulation has begun!")
+	var cached = JSON.parse_string(FileAccess.get_file_as_string("res://Python_Brain/pandemic_simulation.json"))
+	if cached is Dictionary:
+		Data.dict_names = cached
 	
 	cache_city_nodes()
 	
@@ -123,7 +125,7 @@ func notify(title="", subtitle="", body=""):
 
 func cache_city_nodes():
 	var city_codes = ["SF", "CHI", "NYC", "LA", "MA", "WA", "LON", "PA"]
-	var buildings_node = get_node_or_null("/root/Main_Scene/buildings")
+	var buildings_node = get_parent().globe.find_child("Buildings", true, false)
 	
 	if not buildings_node:
 		return
@@ -135,6 +137,10 @@ func cache_city_nodes():
 
 # Updated day add button handler
 func _on_day_add_button_down() -> void:
+	if not Data.dict_names.has("day_" + str(Data.day_count + queued_days + 1)):
+		if is_auto_running:
+			_on_run_stop_button_down()
+		return
 	if queued_days >= max_queued_days:
 		print("Maximum days queued. Please wait.")
 		return
@@ -194,8 +200,8 @@ func _on_show_graph_button_down() -> void:
 			graph_node.update_graph()
 
 func _on_day_back_button_down() -> int:
-	if Data.day_count <= 0: 
-		print("Can't go back before day 0")
+	if processing_queue or Data.day_count <= 1:
+		print("Already at the first day, or a step is processing")
 		return -1
 	
 	Data.day_count -= 1
@@ -237,7 +243,7 @@ func process_sir_values(transit_data, from_city, to_city, passengers_per_plane, 
 
 # Updated create_test_flight function
 func create_test_flight() -> void:
-	var buildings_node = get_node_or_null("/root/Main_Scene/buildings")
+	var buildings_node = get_parent().globe.find_child("Buildings", true, false)
 	if not buildings_node:
 		buildings_node = load("res://scenes/buildings/buildings.tscn").instantiate()
 		add_child(buildings_node)
@@ -248,7 +254,7 @@ func create_test_flight() -> void:
 		return
 	
 	var current_day = "day_" + str(Data.day_count)
-	if not Data.dict_names[current_day].has("movements"):
+	if not Data.dict_names.has(current_day) or not Data.dict_names[current_day].has("movements"):
 		print("No movement data for day: " + current_day)
 		return
 	
@@ -311,7 +317,7 @@ func create_test_flight() -> void:
 	
 
 func create_instant_flight() -> void:
-	var buildings_node = get_node_or_null("/root/Main_Scene/buildings")
+	var buildings_node = get_parent().globe.find_child("Buildings", true, false)
 	if not buildings_node:
 		buildings_node = load("res://scenes/buildings/buildings.tscn").instantiate()
 		add_child(buildings_node)
@@ -391,7 +397,7 @@ func print_node_hierarchy(node, indent = "- "):
 	for child in node.get_children():
 		print_node_hierarchy(child, indent + "  ")
 func _on_run_stop_button_down() -> void:
-	var run_stop_node = $"../PanelContainer6/Run_Stop"
+	# Playback state is reflected by the dashboard.
 	
 	if is_auto_running:
 		is_auto_running = false
